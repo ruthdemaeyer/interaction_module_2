@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resultaten · Hoeveel AI zou jij inzetten?</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=DM+Mono&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f3ee;--ink:#1d1d1b;--cy:#9fe8e6;--track:#e6e3dc}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;position:relative;overflow:hidden}
+.blk1{position:absolute;top:0;right:0;width:15.6vw;height:13.9vh;background:var(--cy)}
+.blk2{position:absolute;top:13.9vh;right:0;width:7.8vw;height:13.9vh;background:var(--cy)}
+main{padding:7.4vh 6.25vw 0}
+.mono{font-family:'DM Mono',monospace;font-size:clamp(11px,1.15vw,20px)}
+h1{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:800;font-size:clamp(32px,5.6vw,108px);line-height:1;letter-spacing:-.02em;margin-top:1.2vh}
+.rows{margin-top:7vh;display:flex;flex-direction:column;gap:4.2vh}
+.row{display:grid;grid-template-columns:16vw 1fr 9vw;align-items:center;gap:2vw}
+.lab .sq{width:2.2vw;height:2.2vw;max-width:28px;max-height:28px;background:var(--cy);margin-bottom:1vh}
+.track{position:relative;height:5.2vh;background:var(--track)}
+.bar{position:absolute;inset:0 auto 0 0;width:0;background:var(--cy);transition:width .8s ease}
+.ticks{position:absolute;inset:0;display:flex;justify-content:space-between;pointer-events:none}
+.ticks i{width:1px;background:var(--bg)}
+.val{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:900;font-size:clamp(28px,4.4vw,84px);line-height:1}
+.n{display:block;margin-top:.4vh}
+.axis{display:grid;grid-template-columns:16vw 1fr 9vw;gap:2vw;margin-top:1.4vh}
+.axis div{display:flex;justify-content:space-between}
+.foot{position:absolute;left:6.25vw;bottom:5vh}
+</style></head><body>
+<div class="blk1"></div><div class="blk2"></div>
+<main>
+<p class="mono">resultaten · gehoorbescherming voor concertgangers</p>
+<h1>Hoeveel AI zou jij inzetten?</h1>
+<div class="rows" id="rows"></div>
+<div class="axis mono"><span></span><div><span>1 · alles zelf</span><span>10 · alles AI</span></div><span></span></div>
+</main>
+<p class="foot mono" id="foot">laden…</p>
+<script>
+const CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTB4uLi9QiomSMifdfR9Y2aN4XCWmeEdyMaiPCdetlk440X33nxP-1nroxF2EibpFQVUwG7xnLqcyp0/pub?output=csv";
+const FASES=[["analyse","01 analyse"],["synthese","02 synthese"],["detaillering","03 detaillering"],["maakfase","04 maakfase"]];
+const rows=document.getElementById('rows');
+rows.innerHTML=FASES.map(([k,l])=>`<div class="row"><div class="lab"><div class="sq"></div><span class="mono">${l}</span></div>
+<div class="track"><div class="bar" id="b-${k}"></div><div class="ticks">${'<i></i>'.repeat(10)}</div></div>
+<div><span class="val" id="v-${k}">–</span><span class="mono n" id="n-${k}">0 stemmen</span></div></div>`).join('');
+function parseCSV(t){const out=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];
+ if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+ else if(ch=='"')q=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);out.push(r);r=[];c=''}else c+=ch}
+ if(c||r.length){r.push(c);out.push(r)}return out}
+function render(data){
+ const head=data[0].map(h=>h.trim().toLowerCase());const fi=head.indexOf('fase'),si=head.indexOf('score');
+ const agg={};FASES.forEach(([k])=>agg[k]={s:0,n:0});let tot=0;
+ for(const r of data.slice(1)){const k=(r[fi]||'').trim().toLowerCase(),v=parseFloat((r[si]||'').replace(',','.'));
+  if(agg[k]&&v>=1&&v<=10){agg[k].s+=v;agg[k].n++;tot++}}
+ FASES.forEach(([k])=>{const a=agg[k],avg=a.n?a.s/a.n:0;
+  document.getElementById('b-'+k).style.width=(a.n?(avg-1)/9*100:0)+'%';
+  document.getElementById('v-'+k).textContent=a.n?avg.toFixed(1).replace('.',','):'–';
+  document.getElementById('n-'+k).textContent=a.n+(a.n==1?' stem':' stemmen')});
+ document.getElementById('foot').textContent=tot+' antwoorden · live';
+}
+async function load(){try{const r=await fetch(CSV+'&t='+Date.now());render(parseCSV(await r.text()))}
+ catch(e){document.getElementById('foot').textContent='kan resultaten niet laden'}}
+if(location.hash=='#demo'){render(parseCSV('Tijdstempel,fase,score\n1,analyse,7\n2,analyse,8\n3,synthese,5\n4,detaillering,4\n5,maakfase,3\n6,synthese,6\n7,maakfase,2'))}
+else{load();setInterval(load,5000)}
+</script></body></html>
