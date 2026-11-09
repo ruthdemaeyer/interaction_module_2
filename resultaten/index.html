@@ -34,6 +34,8 @@ h1{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:800;font-size:c
 </main>
 <p class="foot mono" id="foot">laden…</p>
 <script>
+// SHEET_ID: het stuk tussen /d/ en /edit in de gewone sheet-link (sheet delen: iedereen met link = lezer). Leeg = publish-to-web CSV.
+const SHEET_ID="";
 const CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vTB4uLi9QiomSMifdfR9Y2aN4XCWmeEdyMaiPCdetlk440X33nxP-1nroxF2EibpFQVUwG7xnLqcyp0/pub?output=csv";
 const FASES=[["analyse","01 analyse"],["synthese","02 synthese"],["detaillering","03 detaillering"],["maakfase","04 maakfase"]];
 const rows=document.getElementById('rows');
@@ -55,7 +57,14 @@ function render(data){
   document.getElementById('n-'+k).textContent=a.n+(a.n==1?' stem':' stemmen')});
  document.getElementById('foot').textContent=tot+' antwoorden · live';
 }
-async function load(){try{const r=await fetch(CSV+'&t='+Date.now());render(parseCSV(await r.text()))}
+// Google serveert de gepubliceerde CSV vanaf verschillende caches: soms een oudere versie.
+// Daarom onthouden we elk antwoord dat we ooit zagen, zodat niets terug verdwijnt.
+const seen=new Map();let header=null;
+async function load(){try{
+ const url=SHEET_ID?`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&t=${Date.now()}`:CSV+'&t='+Date.now();
+ const r=await fetch(url,{cache:'no-store'});const d=parseCSV(await r.text());if(!d.length)return;
+ header=d[0];for(const row of d.slice(1)){if(row.join('').trim())seen.set(row.join('\u0001'),row)}
+ render([header,...seen.values()])}
  catch(e){document.getElementById('foot').textContent='kan resultaten niet laden'}}
 if(location.hash=='#demo'){render(parseCSV('Tijdstempel,fase,score\n1,analyse,7\n2,analyse,8\n3,synthese,5\n4,detaillering,4\n5,maakfase,3\n6,synthese,6\n7,maakfase,2'))}
 else{load();setInterval(load,5000)}
