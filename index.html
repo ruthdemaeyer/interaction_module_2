@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoeveel AI gebruik jij?</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,700..900&family=DM+Mono&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f3ee;--ink:#1d1d1b;--cy:#9fe8e6}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;position:relative;overflow-x:hidden}
+.blk1{position:absolute;top:0;right:0;width:96px;height:56px;background:var(--cy)}
+.blk2{position:absolute;top:56px;right:0;width:56px;height:56px;background:var(--cy)}
+main{padding:44px 26px 32px}
+.mono{font-family:'DM Mono',monospace;font-size:13px}
+.case{margin-top:6px}
+h1{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:800;font-size:46px;line-height:.95;letter-spacing:-.5px;margin:56px 0 20px}
+.sq{width:22px;height:22px;background:var(--cy);margin-bottom:12px}
+.uitleg{font-size:18px;line-height:1.4}
+.vraag{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:800;font-size:28px;margin:40px 0 18px}
+.val{font-family:'Archivo',sans-serif;font-stretch:65%;font-weight:900;font-size:64px;line-height:1;text-align:center}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:var(--ink);margin:18px 0 8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;background:var(--cy);border:2px solid var(--ink)}
+.labels{display:flex;justify-content:space-between}
+button:disabled{opacity:.5}
+.bedankt{display:none;margin-top:40px}
+button{margin-top:36px;width:100%;padding:16px;background:var(--ink);color:var(--bg);border:0;font-family:'DM Mono',monospace;font-size:15px}
+</style></head><body>
+<div class="blk1"></div><div class="blk2"></div>
+<main>
+<p class="mono">case</p>
+<p class="mono case">gehoorbescherming voor concertgangers</p>
+<h1 id="titel"></h1>
+<div class="sq"></div>
+<p class="mono" id="nr"></p>
+<p class="uitleg" id="uitleg" style="margin-top:8px"></p>
+<p class="vraag">Hoeveel AI zou jij hier inzetten?</p>
+<div class="val" id="val">5</div>
+<input type="range" min="1" max="10" value="5" id="slider">
+<div class="labels mono"><span>1 · alles zelf</span><span>10 · alles AI</span></div>
+<button id="send">verstuur →</button>
+<div class="bedankt" id="bedankt"><div class="sq"></div><p class="vraag" style="margin:0 0 8px">Bedankt!</p><p class="uitleg">Je antwoord is verstuurd. Kijk mee naar het scherm.</p></div>
+</main>
+<script>
+// === Google Form instellingen (in te vullen) ===
+const FORM_ID="1FAIpQLSdpE35IR3POtUsjEKjUTGQZQlVa3dSLVQhvKfDtEtjJPfY2Gg";          // het stuk tussen /d/e/ en /viewform in de pre-filled link
+const ENTRY_FASE="entry.1276324228";       // bv. entry.123456789
+const ENTRY_SCORE="entry.329834435";      // bv. entry.987654321
+// ===============================================
+const FASES={
+ analyse:{nr:"01 analyse",titel:"Analysefase",uitleg:"De AI-agent doet bronnenonderzoek naar gehoorschade en bestaande oordopjes, stelt de interviewvragen voor concertgangers op en vat alles samen tot de belangrijkste inzichten."},
+ synthese:{nr:"02 synthese",titel:"Synthesefase",uitleg:"De AI-agent clustert de inzichten, schrijft persona's en stelt een lijst ontwerpcriteria voor."},
+ detaillering:{nr:"03 detaillering",titel:"Detailleringsfase",uitleg:"De AI-agent genereert varianten van vorm, materiaal en bediening en toetst ze aan de ontwerpcriteria."},
+ maakfase:{nr:"04 maakfase",titel:"Maakfase",uitleg:"De AI-agent zet het ontwerp om in een 3D-model, plant de prototypes en stelt een testplan op."}
+};
+const keys=Object.keys(FASES);
+const q=new URLSearchParams(location.search).get('fase');
+const k=FASES[q]?q:keys[Math.floor(Math.random()*keys.length)];
+const f=FASES[k];
+titel.textContent=f.titel;nr.textContent=f.nr;uitleg.textContent=f.uitleg;
+slider.oninput=()=>val.textContent=slider.value;
+send.onclick=async()=>{
+ send.disabled=true;send.textContent="bezig…";
+ if(FORM_ID){
+  const body=new URLSearchParams();body.append(ENTRY_FASE,k);body.append(ENTRY_SCORE,slider.value);
+  try{await fetch("https://docs.google.com/forms/d/e/"+FORM_ID+"/formResponse",{method:"POST",mode:"no-cors",body});}catch(e){}
+ }
+ send.style.display="none";slider.disabled=true;bedankt.style.display="block";
+};
+</script></body></html>
